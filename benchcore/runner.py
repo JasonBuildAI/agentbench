@@ -44,31 +44,15 @@ def run_benchmark(
 
     records: list[RunRecord] = []
     for suite in suites:
-        tasks = suite.load_tasks()
-        for task in tasks:
-            for round_idx in range(1, rounds + 1):
-                best: RunRecord | None = None
-                for attempt in range(1, max_attempts + 1):
-                    rec = suite.run_task(
-                        task=task,
-                        round_index=round_idx,
-                        attempt=attempt,
-                        base_url=base_url,
-                        model=model,
-                        provider_key=provider_key,
-                        timeout_s=timeout_s,
-                    )
-                    if rec.ok:
-                        best = rec
-                        break
-                    if best is None:
-                        best = rec
-                if best is not None:
-                    records.append(best)
-                    print(
-                        f"[{suite.name}] {best.task_id} round {round_idx}/{rounds} "
-                        f"ok={best.ok} latency_ms={best.latency_ms} attempt={best.attempt}"
-                    )
+        suite_records = suite.run_suite(
+            base_url=base_url,
+            model=model,
+            provider_key=provider_key,
+            rounds=rounds,
+            max_attempts=max_attempts,
+            timeout_s=timeout_s,
+        )
+        records.extend(suite_records)
 
     summary = summarize_records(records)
     write_artifacts(
